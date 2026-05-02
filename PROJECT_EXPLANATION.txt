@@ -1,0 +1,227 @@
+Project Title: Cartify Webstore
+
+Overview
+--------
+Cartify is a simple React-based e-commerce demo application built in a single-page app style. It offers a home page with featured categories, a product listing page with search, filtering, and sorting, product details with quantity selection, a cart page with quantity controls, a checkout flow, and a profile/account page.
+
+The site uses React components, React Router for navigation, React Context for cart state, and localStorage to persist user and cart data across refreshes.
+
+Libraries Used
+--------------
+- react: React library for building the UI.
+- react-dom: DOM rendering support for React.
+- react-router-dom: Client-side routing between pages.
+- react-scripts: Create React App tooling for development, build, and testing.
+- @testing-library/react, @testing-library/jest-dom, @testing-library/user-event: Testing utilities included by Create React App.
+- web-vitals: Performance measurement library included by Create React App.
+
+Key React Concepts Used
+------------------------
+- Components: The app is broken into reusable components like Header, Navbar, Footer, HeroSlider, ProductCard.
+- Props: Data and callbacks flow from parents to child components using props.
+- State: useState maintains local UI state like search text, dark mode, selected filters, user login state.
+- Side effects: useEffect updates the document body class for dark mode and saves cart state to localStorage.
+- Context: CartContext provides shared cart state and actions across the app without prop drilling.
+- Routing: BrowserRouter, Routes, and Route render different pages for each URL path.
+- Local Storage: Persists user login info and cart contents so the experience survives refresh.
+
+Project Structure
+-----------------
+Root files
+- package.json: Project dependencies and npm scripts.
+- README.md: Default app README (not edited by this explanation).
+
+src/
+- App.js: Main app component, routes configuration, and top-level app state.
+- index.js: React entry point that renders <App /> into the DOM.
+- App.css and styles/main.css: Global application styles.
+- context/CartContext.jsx: Context provider for cart state and actions.
+- components/: UI components.
+- pages/: Page-level views used by routing.
+- data/: Static product and banner data.
+
+Detailed File Explanation
+-------------------------
+
+src/App.js
+-----------
+This is the central component of the app.
+- It wraps the entire UI in <BrowserRouter> to enable client-side routes.
+- It defines app-level state:
+  - searchText: used by the Products page for search.
+  - user: stores login data and loads from localStorage on page load.
+  - darkMode: toggles the app theme and saves preference to localStorage.
+- It provides login/logout handlers that save and clear user data.
+- It uses useEffect to toggle a `dark-mode` class on the <body> element.
+- It renders Header, Navbar, the <Routes> content, and Footer.
+- Routes:
+  - "/" => Home
+  - "/products" => Products listing
+  - "/products/:id" => ProductDetails
+  - "/cart" => Cart
+  - "/checkout" => Checkout
+  - "/account" => Account
+
+src/context/CartContext.jsx
+---------------------------
+This file creates the CartContext and provider.
+- It initializes cartItems from localStorage if available.
+- A useEffect saves cartItems back to localStorage whenever the cart changes.
+- It exposes actions:
+  - addToCart(item): adds a product or increases quantity if already present.
+  - removeFromCart(id): removes an item from the cart.
+  - updateCartItemQty(id, delta): adjusts quantity, removing the item when qty drops below 1.
+- CartProvider wraps child components and supplies cartItems and these actions.
+
+src/components/Header.jsx
+-------------------------
+Header renders the top header bar.
+- It shows the app brand, search input, login/logout buttons, dark mode toggle, and cart badge.
+- It uses CartContext to display current cart item count.
+- It includes a modal login form on click.
+- Login is mocked: it only stores email and uses the part before `@` as name.
+- It supports dark mode toggling through a callback from App.
+
+src/components/Navbar.jsx
+-------------------------
+Navbar is the navigation bar.
+- It uses react-router-dom `Link` and `useLocation`.
+- It renders links for Home, Products, Cart, and Account.
+- The active route gets a visual `navbar__link--active` state.
+
+src/components/ProductCard.jsx
+------------------------------
+ProductCard displays a product tile.
+- It includes image, name, rating, price, quantity controls, and an Add to Cart button.
+- It requires the user to be logged in before adding items.
+- When added, it calls addToCart from CartContext.
+- It shows a temporary notification toast after adding.
+
+src/components/HeroSlider.jsx
+----------------------------
+HeroSlider shows rotating promotional banners on the home page.
+- It loads banner data from `src/data/banners.js`.
+- It rotates slides every 5 seconds via useEffect.
+- It supports manual previous/next controls and clickable dots.
+
+src/components/Footer.jsx
+-------------------------
+Footer renders a simple footer with company info, quick links, policies, and social links.
+- It uses the current year dynamically.
+
+src/data/products.js
+---------------------
+This file stores the product catalog.
+- Each product has id, name, category, price, section, reviews, and image.
+- Several products use remote image URLs or inline base64 data.
+- The catalog is imported by Products, Home, and ProductDetails.
+
+src/data/banners.js
+--------------------
+This file stores the home page hero banners.
+- Each banner includes title, subtitle, image, specs, price, and discount.
+- HeroSlider uses this data to render the rotating carousel.
+
+src/pages/Home.jsx
+-------------------
+Home is the landing page.
+- It renders HeroSlider.
+- It shows a category selector with fixed sections: Featured, BestSeller, Premium, GiftIdea.
+- It displays a featured product card for the selected category.
+- It lists products from `products.js` filtered by the selected section.
+
+src/pages/Products.jsx
+-----------------------
+Products is the shop listing page.
+- It receives searchText and user from App.
+- It manages category and sort state.
+- It filters the product list by:
+  - chosen category
+  - search text typed in the header search box
+- It sorts by price low-to-high, high-to-low, or reviews.
+- It renders ProductCard for each result.
+
+src/pages/ProductDetails.jsx
+-----------------------------
+ProductDetails renders a detailed view for a single product.
+- It reads `id` from the route params using `useParams`.
+- It finds the matching product in the catalog.
+- It allows the user to select quantity and add to cart.
+- If the product ID is invalid, it shows a "Product not found" message.
+
+src/pages/Cart.jsx
+-------------------
+Cart displays the cart page.
+- It consumes CartContext for cartItems and actions.
+- It calculates the total price from item price × qty.
+- It allows users to:
+  - increment or decrement item quantities
+  - remove items
+- If the cart is empty, the page shows a friendly empty state and a link back to Products.
+- If the cart has items, it shows an order summary and a checkout button.
+
+src/pages/Checkout.jsx
+------------------------
+Checkout handles a simple checkout flow.
+- It reads cartItems from CartContext.
+- It calculates the order total.
+- It collects a delivery address from the user.
+- On Place Order, it shows a success screen and redirects back to home after a short delay.
+- If the cart is empty, it shows a message telling the user to add items first.
+
+src/pages/Account.jsx
+-----------------------
+Account is a profile/help page.
+- It stores profile information in localStorage.
+- It allows editing fields like name, email, mobile, and address.
+- It also shows a static FAQ/help section.
+- The user can toggle edit mode and save changes.
+
+src/index.js
+-------------
+Entry point for React.
+- It imports React and ReactDOM.
+- It renders `<App />` into the root DOM element.
+- It also imports global CSS.
+
+Main Project Flow
+------------------
+1. The user opens the site and lands on `/`.
+2. The Header loads login state and dark mode preference from localStorage.
+3. The HeroSlider and Home product sections appear.
+4. The user can search, filter, and sort products on `/products`.
+5. Clicking a product opens `/products/:id` for details.
+6. Adding items to cart updates the shared CartContext and persists them.
+7. The cart page shows all items, allows quantity changes, and removes items.
+8. Checkout collects an address and confirms the order.
+9. Account lets the user edit profile info and view FAQs.
+
+Important User Experience Details
+----------------------------------
+- Login is a mock behavior, not connected to a server.
+- Cart data persists with localStorage, so items survive page refresh.
+- Product images mix remote URLs and base64 inline images.
+- Dark mode is a `body` class toggle; styling is controlled via CSS.
+- The Search box is global and affects the Products page only by passing state down from App.
+
+What Was Built / What You Did
+------------------------------
+- Set up a React project using Create React App.
+- Installed and used `react-router-dom` for page navigation.
+- Created shared app state for the cart using React Context.
+- Implemented persistent storage for both cart and login state.
+- Built reusable UI components for product display and site layout.
+- Added a promotions slider, product filters, sorting, and category toggles.
+- Implemented a mock e-commerce workflow from browsing to checkout.
+- Implemented responsive-like UI using CSS classes and useful page layouts.
+
+How to Run the Project
+-----------------------
+1. Open the project directory in a terminal.
+2. Run `npm install` to install dependencies if not already installed.
+3. Run `npm start` to start the development server.
+4. Open the browser at `http://localhost:3000`.
+
+Summary
+--------
+The Cartify project is a solid example of a React SPA with complete page navigation, shopping cart context, persistent client-side storage, and typical e-commerce features like product browsing, details, cart management, and checkout. It is built with standard React concepts and is easy to present as a functional demo app.
